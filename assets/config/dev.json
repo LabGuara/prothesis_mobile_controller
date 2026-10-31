@@ -5,7 +5,7 @@
   "commandLogsTopic": "prosthesis/actions",
   "validatedLogsTopic": "prosthesis/logs/validated",
   "powerFeedbackValidatedTopic": "prosthesis/actions/feedback/validated",
-  "collectionsTopic": "prosthesis/collections",
+  "collectsTopic": "prosthesis/collects",
   "qos": 1,
   "clientId": "prosthesis-mobile-controller-dev",
   "connectionTimeoutSeconds": 15,

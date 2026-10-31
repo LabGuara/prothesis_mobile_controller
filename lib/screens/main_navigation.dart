@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../services/collection_store.dart';
+import '../services/collect_store.dart';
 import '../services/mqtt_service.dart';
-import 'collections_screen.dart';
+import 'collects_screen.dart';
 import 'home_screen.dart';
 import 'sensors_screen.dart';
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key, required this.collectionStore});
+  const MainNavigation({super.key, required this.collectStore});
 
-  final CollectionStore collectionStore;
+  final CollectStore collectStore;
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -18,7 +18,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  // Commands and collection starts share one connection, which the control screen connects and shows.
+  // Commands and collect starts share one connection, which the control screen connects and shows.
   final _mqttService = MqttService(subscribeToPowerFeedback: true);
 
   @override
@@ -30,15 +30,15 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final screens = <Widget>[
-      HomeScreen(mqttService: _mqttService, collectionStore: widget.collectionStore),
+      HomeScreen(mqttService: _mqttService, collectStore: widget.collectStore),
       SensorsScreen(isActive: _currentIndex == 1),
-      CollectionsScreen(mqttService: _mqttService, collectionStore: widget.collectionStore),
+      CollectsScreen(mqttService: _mqttService, collectStore: widget.collectStore),
     ];
 
     const items = <BottomNavigationBarItem>[
       BottomNavigationBarItem(icon: Icon(Icons.directions_walk_rounded), label: 'Control'),
       BottomNavigationBarItem(icon: Icon(Icons.show_chart_rounded), label: 'Sensors'),
-      BottomNavigationBarItem(icon: Icon(Icons.assignment_rounded), label: 'Collections'),
+      BottomNavigationBarItem(icon: Icon(Icons.assignment_rounded), label: 'Collects'),
     ];
 
     return Scaffold(

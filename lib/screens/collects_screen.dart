@@ -2,74 +2,74 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-import '../models/data_collection.dart';
-import '../services/collection_store.dart';
+import '../models/collect.dart';
+import '../services/collect_store.dart';
 import '../services/mqtt_service.dart';
 import '../theme/gait_mode_styles.dart';
 
 const _dialogTitleStyle = TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600);
 const _dialogContentStyle = TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.4);
 
-class CollectionsScreen extends StatelessWidget {
-  const CollectionsScreen({super.key, required this.mqttService, required this.collectionStore});
+class CollectsScreen extends StatelessWidget {
+  const CollectsScreen({super.key, required this.mqttService, required this.collectStore});
 
   final MqttService mqttService;
-  final CollectionStore collectionStore;
+  final CollectStore collectStore;
 
   static final DateFormat _dateTimeFormat = DateFormat('dd/MM/yyyy HH:mm');
   static final DateFormat _timeFormat = DateFormat('HH:mm:ss');
 
-  Future<void> _createCollection(BuildContext context) async {
-    final volunteer = await showDialog<String>(context: context, builder: (_) => const _NewCollectionDialog());
+  Future<void> _createCollect(BuildContext context) async {
+    final volunteer = await showDialog<String>(context: context, builder: (_) => const _NewCollectDialog());
     if (volunteer == null) {
       return;
     }
 
     // Only opened once announced, so the orchestrator stores it with its volunteer.
-    final collection = DataCollection.create(volunteer);
+    final collect = Collect.create(volunteer);
     try {
-      await mqttService.publishCollectionStart(collection);
+      await mqttService.publishCollectStart(collect);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to start the collection: $e'), backgroundColor: Colors.red));
+        ).showSnackBar(SnackBar(content: Text('Failed to start the collect: $e'), backgroundColor: Colors.red));
       }
       return;
     }
-    collectionStore.start(collection);
+    collectStore.start(collect);
   }
 
-  Future<void> _finishCollection(BuildContext context) async {
-    final collection = collectionStore.activeCollection;
-    if (collection == null) {
+  Future<void> _finishCollect(BuildContext context) async {
+    final collect = collectStore.activeCollect;
+    if (collect == null) {
       return;
     }
-    final runInProgress = collection.runs.lastOrNull?.isInProgress ?? false;
+    final runInProgress = collect.runs.lastOrNull?.isInProgress ?? false;
     final confirmed = await _confirm(
       context,
-      title: 'Finish collection?',
+      title: 'Finish collect?',
       message:
-          'New runs will no longer be added to the collection of ${collection.volunteer}.'
+          'New runs will no longer be added to the collect of ${collect.volunteer}.'
           '${runInProgress ? ' The run in progress stays in it and gets its end time when the prosthesis stops.' : ''}',
       confirmLabel: 'Finish',
     );
     if (confirmed) {
-      collectionStore.finish();
+      collectStore.finish();
     }
   }
 
-  Future<void> _deleteCollection(BuildContext context, DataCollection collection) async {
+  Future<void> _deleteCollect(BuildContext context, Collect collect) async {
     final confirmed = await _confirm(
       context,
-      title: 'Delete collection?',
+      title: 'Delete collect?',
       message:
-          'The collection of ${collection.volunteer} and its run IDs will be removed from this phone. '
+          'The collect of ${collect.volunteer} and its run IDs will be removed from this phone. '
           'The runs stay in the database.',
       confirmLabel: 'Delete',
     );
     if (confirmed) {
-      collectionStore.delete(collection);
+      collectStore.delete(collect);
     }
   }
 
@@ -122,15 +122,15 @@ class CollectionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: collectionStore,
+      listenable: collectStore,
       builder: (context, _) {
-        final collections = collectionStore.collections;
-        final isCollecting = collectionStore.activeCollection != null;
+        final collects = collectStore.collects;
+        final isCollecting = collectStore.activeCollect != null;
 
         return Scaffold(
           backgroundColor: const Color(0xFF0F172A),
           appBar: AppBar(
-            title: const Text('Data Collection', style: TextStyle(fontWeight: FontWeight.w600)),
+            title: const Text('Collects', style: TextStyle(fontWeight: FontWeight.w600)),
             backgroundColor: const Color(0xFF0F172A),
             foregroundColor: Colors.white,
             elevation: 0,
@@ -139,28 +139,28 @@ class CollectionsScreen extends StatelessWidget {
               child: Container(height: 1, color: const Color(0xFF1E293B)),
             ),
           ),
-          body: collections.isEmpty
+          body: collects.isEmpty
               ? _buildEmpty()
               : ListView.separated(
                   // The bottom inset keeps the last card clear of the floating button.
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-                  itemCount: collections.length,
+                  itemCount: collects.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) => _buildCollectionCard(context, collections[index]),
+                  itemBuilder: (context, index) => _buildCollectCard(context, collects[index]),
                 ),
           floatingActionButton: isCollecting
               ? FloatingActionButton.extended(
                   key: const ValueKey('finish'),
-                  onPressed: () => _finishCollection(context),
+                  onPressed: () => _finishCollect(context),
                   backgroundColor: const Color(0xFFEF4444),
                   foregroundColor: Colors.white,
                   icon: const Icon(Icons.stop_rounded),
-                  label: const Text('Finish collection', style: TextStyle(fontWeight: FontWeight.w600)),
+                  label: const Text('Finish collect', style: TextStyle(fontWeight: FontWeight.w600)),
                 )
               : FloatingActionButton(
                   key: const ValueKey('new'),
-                  onPressed: () => _createCollection(context),
-                  tooltip: 'New collection',
+                  onPressed: () => _createCollect(context),
+                  tooltip: 'New collect',
                   backgroundColor: const Color(0xFF14B8A6),
                   foregroundColor: Colors.white,
                   child: const Icon(Icons.add_rounded),
@@ -175,7 +175,7 @@ class CollectionsScreen extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 32),
         child: Text(
-          'No collections yet. Create one to group the runs of a volunteer.',
+          'No collects yet. Create one to group the runs of a volunteer.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.5),
         ),
@@ -183,9 +183,9 @@ class CollectionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCollectionCard(BuildContext context, DataCollection collection) {
-    final isActive = collection.isActive;
-    final runs = collection.runs.length;
+  Widget _buildCollectCard(BuildContext context, Collect collect) {
+    final isActive = collect.isActive;
+    final runs = collect.runs.length;
 
     return Material(
       color: const Color(0xFF1E293B),
@@ -195,7 +195,7 @@ class CollectionsScreen extends StatelessWidget {
         side: BorderSide(color: isActive ? const Color(0xFF14B8A6) : const Color(0xFF334155), width: 1.5),
       ),
       child: ExpansionTile(
-        key: PageStorageKey<DateTime>(collection.startedAt),
+        key: PageStorageKey<DateTime>(collect.startedAt),
         initiallyExpanded: isActive,
         shape: const Border(),
         collapsedShape: const Border(),
@@ -209,12 +209,12 @@ class CollectionsScreen extends StatelessWidget {
           color: isActive ? const Color(0xFF14B8A6) : const Color(0xFF64748B),
         ),
         title: Text(
-          collection.volunteer,
+          collect.volunteer,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
-          '${isActive ? 'Active' : 'Finished'} · ${_dateTimeFormat.format(collection.startedAt.toLocal())} · '
+          '${isActive ? 'Active' : 'Finished'} · ${_dateTimeFormat.format(collect.startedAt.toLocal())} · '
           '${runs == 1 ? '1 run' : '$runs runs'}',
           style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
         ),
@@ -222,10 +222,10 @@ class CollectionsScreen extends StatelessWidget {
           const Divider(height: 1, color: Color(0xFF334155)),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: _buildCopyableId(context, collection.id, label: 'ID', copiedMessage: 'Collection ID copied'),
+            child: _buildCopyableId(context, collect.id, label: 'ID', copiedMessage: 'Collect ID copied'),
           ),
           const Divider(height: 1, color: Color(0xFF334155)),
-          if (collection.runs.isEmpty)
+          if (collect.runs.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
               child: Text(
@@ -233,7 +233,7 @@ class CollectionsScreen extends StatelessWidget {
                 style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
               ),
             ),
-          for (final (index, run) in collection.runs.indexed) ...[
+          for (final (index, run) in collect.runs.indexed) ...[
             if (index > 0) const Divider(height: 1, color: Color(0xFF334155)),
             _buildRun(context, index + 1, run),
           ],
@@ -242,7 +242,7 @@ class CollectionsScreen extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
-                onPressed: () => _deleteCollection(context, collection),
+                onPressed: () => _deleteCollect(context, collect),
                 icon: const Icon(Icons.delete_outline_rounded, size: 18),
                 label: const Text('Delete'),
                 style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
@@ -254,7 +254,7 @@ class CollectionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRun(BuildContext context, int number, CollectionRun run) {
+  Widget _buildRun(BuildContext context, int number, CollectRun run) {
     final mode = run.gaitMode;
     final style = gaitModeStyles[mode];
     final color = style?.color ?? const Color(0xFF94A3B8);
@@ -357,14 +357,14 @@ class CollectionsScreen extends StatelessWidget {
   }
 }
 
-class _NewCollectionDialog extends StatefulWidget {
-  const _NewCollectionDialog();
+class _NewCollectDialog extends StatefulWidget {
+  const _NewCollectDialog();
 
   @override
-  State<_NewCollectionDialog> createState() => _NewCollectionDialogState();
+  State<_NewCollectDialog> createState() => _NewCollectDialogState();
 }
 
-class _NewCollectionDialogState extends State<_NewCollectionDialog> {
+class _NewCollectDialogState extends State<_NewCollectDialog> {
   final _controller = TextEditingController();
 
   String get _volunteer => _controller.text.trim();
@@ -386,7 +386,7 @@ class _NewCollectionDialogState extends State<_NewCollectionDialog> {
     return AlertDialog(
       backgroundColor: const Color(0xFF1E293B),
       titleTextStyle: _dialogTitleStyle,
-      title: const Text('New collection'),
+      title: const Text('New collect'),
       content: TextField(
         controller: _controller,
         autofocus: true,

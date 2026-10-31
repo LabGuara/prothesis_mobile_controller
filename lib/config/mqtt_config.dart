@@ -15,7 +15,7 @@ class MqttConfig {
   static String _commandLogsTopic = 'prosthesis/actions';
   static String _validatedLogsTopic = 'prosthesis/logs/validated';
   static String _powerFeedbackValidatedTopic = 'prosthesis/actions/feedback/validated';
-  static String _collectionsTopic = 'prosthesis/collections';
+  static String _collectsTopic = 'prosthesis/collects';
   static int _qos = 1;
   static String _clientId = 'prosthesis-mobile-controller';
   static Duration _connectionTimeout = const Duration(seconds: 15);
@@ -32,7 +32,7 @@ class MqttConfig {
   static String get commandLogsTopic => _commandLogsTopic;
   static String get validatedLogsTopic => _validatedLogsTopic;
   static String get powerFeedbackValidatedTopic => _powerFeedbackValidatedTopic;
-  static String get collectionsTopic => _collectionsTopic;
+  static String get collectsTopic => _collectsTopic;
   static int get qos => _qos;
   static String get clientId => _clientId;
   static Duration get connectionTimeout => _connectionTimeout;
@@ -71,7 +71,7 @@ class MqttConfig {
       'powerFeedbackValidatedTopic',
       fallback: _powerFeedbackValidatedTopic,
     );
-    _collectionsTopic = readString(decoded, 'collectionsTopic', fallback: _collectionsTopic);
+    _collectsTopic = readString(decoded, 'collectsTopic', fallback: _collectsTopic);
     _qos = readInt(decoded, 'qos', fallback: _qos);
     _clientId = readString(decoded, 'clientId', fallback: _clientId);
     _connectionTimeout = Duration(

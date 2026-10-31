@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'config/mqtt_config.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/main_navigation.dart';
-import 'services/collection_store.dart';
+import 'services/collect_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await MqttConfig.load();
-  final collectionStore = await CollectionStore.load();
-  runApp(MyApp(collectionStore: collectionStore));
+  final collectStore = await CollectStore.load();
+  runApp(MyApp(collectStore: collectStore));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.collectionStore});
+  const MyApp({super.key, required this.collectStore});
 
-  final CollectionStore collectionStore;
+  final CollectStore collectStore;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: MainNavigation(collectionStore: collectionStore),
+      home: MainNavigation(collectStore: collectStore),
     );
   }
 }

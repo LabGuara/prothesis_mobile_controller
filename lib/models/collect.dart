@@ -4,7 +4,7 @@ import 'action_command.dart';
 
 /// One run of the prosthesis, as named by the bridge. The times are the timestamps of the feedbacks
 /// that started and ended it, the same ones the orchestrator stores for the run.
-class CollectionRun {
+class CollectRun {
   final String runId;
   final DateTime startedAt;
   DateTime? endedAt;
@@ -12,21 +12,15 @@ class CollectionRun {
   final int? gait;
   final int? current;
 
-  CollectionRun({
-    required this.runId,
-    required this.startedAt,
-    this.endedAt,
-    required this.gait,
-    required this.current,
-  });
+  CollectRun({required this.runId, required this.startedAt, this.endedAt, required this.gait, required this.current});
 
   bool get isInProgress => endedAt == null;
 
   GaitMode? get gaitMode => GaitMode.fromValue(gait);
 
-  factory CollectionRun.fromMap(Map<String, dynamic> map) {
+  factory CollectRun.fromMap(Map<String, dynamic> map) {
     final endedAt = map['ended_at'] as String?;
-    return CollectionRun(
+    return CollectRun(
       runId: map['run_id'] as String,
       startedAt: DateTime.parse(map['started_at'] as String),
       endedAt: endedAt == null ? null : DateTime.parse(endedAt),
@@ -44,37 +38,32 @@ class CollectionRun {
   };
 }
 
-/// A data collection session with one volunteer. The database only stores its [id], which every
-/// command carries so the runs it starts are filed under it; the volunteer stays on the phone.
-class DataCollection {
+/// A session with one volunteer. The app announces it, with the volunteer, when it starts; every
+/// command then carries its [id], so the runs it starts are filed under it.
+class Collect {
   final String id;
   final String volunteer;
   final DateTime startedAt;
   DateTime? finishedAt;
 
-  final List<CollectionRun> runs;
+  final List<CollectRun> runs;
 
-  DataCollection({
-    required this.id,
-    required this.volunteer,
-    required this.startedAt,
-    this.finishedAt,
-    List<CollectionRun>? runs,
-  }) : runs = runs ?? [];
+  Collect({required this.id, required this.volunteer, required this.startedAt, this.finishedAt, List<CollectRun>? runs})
+    : runs = runs ?? [];
 
-  DataCollection.create(this.volunteer) : id = const Uuid().v4(), startedAt = DateTime.now().toUtc(), runs = [];
+  Collect.create(this.volunteer) : id = const Uuid().v4(), startedAt = DateTime.now().toUtc(), runs = [];
 
   bool get isActive => finishedAt == null;
 
-  factory DataCollection.fromMap(Map<String, dynamic> map) {
+  factory Collect.fromMap(Map<String, dynamic> map) {
     final finishedAt = map['finished_at'] as String?;
-    return DataCollection(
-      // Collections saved before they had an id get one now; their runs were stored without it.
+    return Collect(
+      // Collects saved before they had an id get one now; their runs were stored without it.
       id: map['id'] as String? ?? const Uuid().v4(),
       volunteer: map['volunteer'] as String,
       startedAt: DateTime.parse(map['started_at'] as String),
       finishedAt: finishedAt == null ? null : DateTime.parse(finishedAt),
-      runs: [for (final run in map['runs'] as List<dynamic>) CollectionRun.fromMap(run as Map<String, dynamic>)],
+      runs: [for (final run in map['runs'] as List<dynamic>) CollectRun.fromMap(run as Map<String, dynamic>)],
     );
   }
 

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../config/mqtt_config.dart';
-import '../services/collection_store.dart';
+import '../services/collect_store.dart';
 import '../services/mqtt_service.dart';
 import '../models/action_command.dart';
 import '../models/power_feedback.dart';
@@ -12,11 +12,11 @@ import '../theme/gait_mode_styles.dart';
 enum PowerUiState { pending, on, off }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.mqttService, required this.collectionStore});
+  const HomeScreen({super.key, required this.mqttService, required this.collectStore});
 
-  /// Shared with the collections screen; this screen connects it and shows its state.
+  /// Shared with the collects screen; this screen connects it and shows its state.
   final MqttService mqttService;
-  final CollectionStore collectionStore;
+  final CollectStore collectStore;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool get _isCommandPending => _pendingCommand != null || _pendingMode != null || _pendingMilliamps != null;
 
-  String? get _collectionId => widget.collectionStore.activeCollection?.id;
+  String? get _collectId => widget.collectStore.activeCollect?.id;
 
   static const _assumedInitialState = PowerUiState.off;
 
@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) {
       return;
     }
-    widget.collectionStore.recordFeedback(feedback);
+    widget.collectStore.recordFeedback(feedback);
     if (feedback.isInternal) {
       _onInternalFeedback(feedback);
       return;
@@ -316,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      await _mqttService.publishAction(CommandLog.fromPower(powerState, collectionId: _collectionId));
+      await _mqttService.publishAction(CommandLog.fromPower(powerState, collectId: _collectId));
       _feedbackTimer?.cancel();
       _feedbackTimer = Timer(MqttConfig.powerFeedbackTimeout, _onFeedbackTimeout);
     } catch (e) {
@@ -333,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _pendingMode = mode);
 
     try {
-      await _mqttService.publishAction(CommandLog.fromGaitMode(mode, collectionId: _collectionId));
+      await _mqttService.publishAction(CommandLog.fromGaitMode(mode, collectId: _collectId));
       _gaitFeedbackTimer?.cancel();
       _gaitFeedbackTimer = Timer(MqttConfig.powerFeedbackTimeout, _onGaitFeedbackTimeout);
     } catch (e) {
@@ -361,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _pendingMilliamps = target);
 
     try {
-      await _mqttService.publishAction(CommandLog.fromActuatorCurrent(target, collectionId: _collectionId));
+      await _mqttService.publishAction(CommandLog.fromActuatorCurrent(target, collectId: _collectId));
       _currentFeedbackTimer?.cancel();
       _currentFeedbackTimer = Timer(MqttConfig.powerFeedbackTimeout, _onCurrentFeedbackTimeout);
     } catch (e) {
@@ -410,15 +410,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCollectionBanner() {
+  Widget _buildCollectBanner() {
     return ListenableBuilder(
-      listenable: widget.collectionStore,
+      listenable: widget.collectStore,
       builder: (context, _) {
-        final collection = widget.collectionStore.activeCollection;
-        if (collection == null) {
+        final collect = widget.collectStore.activeCollect;
+        if (collect == null) {
           return const SizedBox.shrink();
         }
-        final runs = collection.runs.length;
+        final runs = collect.runs.length;
 
         return Container(
           color: const Color(0xFF14B8A6).withValues(alpha: 0.12),
@@ -429,7 +429,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Collecting: ${collection.volunteer}',
+                  'Collecting: ${collect.volunteer}',
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Color(0xFF14B8A6), fontSize: 13, fontWeight: FontWeight.w600),
                 ),
@@ -676,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildStatusBar(l10n),
-          _buildCollectionBanner(),
+          _buildCollectBanner(),
 
           Expanded(
             child: Padding(

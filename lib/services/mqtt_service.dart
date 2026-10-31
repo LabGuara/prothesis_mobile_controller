@@ -5,7 +5,7 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import '../config/mqtt_config.dart';
 import '../models/action_command.dart';
-import '../models/data_collection.dart';
+import '../models/collect.dart';
 import '../models/power_feedback.dart';
 
 class MqttService {
@@ -104,12 +104,9 @@ class MqttService {
     _publish(MqttConfig.commandLogsTopic, command.toJson());
   }
 
-  /// Tells the orchestrator a data collection started, so it stores the collection with its volunteer.
-  Future<void> publishCollectionStart(DataCollection collection) async {
-    _publish(
-      MqttConfig.collectionsTopic,
-      jsonEncode({'collection_id': collection.id, 'volunteer': collection.volunteer}),
-    );
+  /// Tells the orchestrator a collect started, so it stores it with its volunteer.
+  Future<void> publishCollectStart(Collect collect) async {
+    _publish(MqttConfig.collectsTopic, jsonEncode({'collect_id': collect.id, 'volunteer': collect.volunteer}));
   }
 
   void _publish(String topic, String payload) {

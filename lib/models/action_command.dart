@@ -101,29 +101,29 @@ class CommandLog {
   final CommandType commandType;
   final int value;
 
-  /// The data collection open when the command was sent: a run the command starts is filed under it.
-  final String? collectionId;
+  /// The collect open when the command was sent: a run the command starts is filed under it.
+  final String? collectId;
 
-  CommandLog({this.id, DateTime? timestamp, required this.commandType, required this.value, this.collectionId})
+  CommandLog({this.id, DateTime? timestamp, required this.commandType, required this.value, this.collectId})
     : timestamp = (timestamp ?? DateTime.now()).toUtc();
 
-  factory CommandLog.fromGaitMode(GaitMode mode, {String? id, String? collectionId}) {
-    return CommandLog(id: id, commandType: CommandType.gaitMode, value: mode.value, collectionId: collectionId);
+  factory CommandLog.fromGaitMode(GaitMode mode, {String? id, String? collectId}) {
+    return CommandLog(id: id, commandType: CommandType.gaitMode, value: mode.value, collectId: collectId);
   }
 
-  factory CommandLog.fromPower(PowerState state, {String? id, String? collectionId}) {
-    return CommandLog(id: id, commandType: CommandType.power, value: state.value, collectionId: collectionId);
+  factory CommandLog.fromPower(PowerState state, {String? id, String? collectId}) {
+    return CommandLog(id: id, commandType: CommandType.power, value: state.value, collectId: collectId);
   }
 
-  factory CommandLog.fromActuatorCurrent(int milliamps, {String? id, String? collectionId}) {
-    return CommandLog(id: id, commandType: CommandType.actuatorCurrent, value: milliamps, collectionId: collectionId);
+  factory CommandLog.fromActuatorCurrent(int milliamps, {String? id, String? collectId}) {
+    return CommandLog(id: id, commandType: CommandType.actuatorCurrent, value: milliamps, collectId: collectId);
   }
 
   Map<String, dynamic> toMap() => {
     'timestamp': timestamp.toIso8601String(),
     'command_type': commandType.value,
     'value': value,
-    'collection_id': collectionId,
+    'collect_id': collectId,
   };
 
   String toJson() => jsonEncode(toMap());
@@ -131,5 +131,5 @@ class CommandLog {
   @override
   String toString() =>
       'CommandLog(id: $id, timestamp: $timestamp, commandType: ${commandType.value}, value: $value, '
-      'collectionId: $collectionId)';
+      'collectId: $collectId)';
 }

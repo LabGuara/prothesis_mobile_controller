@@ -93,7 +93,7 @@ class PowerFeedback {
   final int? commandId;
   final FeedbackOrigin origin;
   final String? runId;
-  final String? collectionId;
+  final String? collectId;
   final PowerCommand command;
   final PowerFeedbackStatus status;
   final ProsthesisState state;
@@ -108,7 +108,7 @@ class PowerFeedback {
     required this.commandId,
     required this.origin,
     required this.runId,
-    required this.collectionId,
+    required this.collectId,
     required this.command,
     required this.status,
     required this.state,
@@ -142,7 +142,7 @@ class PowerFeedback {
     final origin = decoded.containsKey('origin') ? FeedbackOrigin.fromWire(decoded['origin']) : FeedbackOrigin.remote;
     final commandId = decoded['command_id'];
     final runId = decoded['run_id'];
-    final collectionId = decoded['collection_id'];
+    final collectId = decoded['collect_id'];
     final gait = decoded['gait'];
     final current = decoded['current'];
     final message = decoded['message'];
@@ -154,7 +154,7 @@ class PowerFeedback {
         origin == null ||
         (commandId != null && commandId is! int) ||
         (runId != null && runId is! String) ||
-        (collectionId != null && collectionId is! String) ||
+        (collectId != null && collectId is! String) ||
         (gait != null && gait is! int) ||
         (current != null && current is! int) ||
         message is! String) {
@@ -166,7 +166,7 @@ class PowerFeedback {
       commandId: commandId as int?,
       origin: origin,
       runId: runId as String?,
-      collectionId: collectionId as String?,
+      collectId: collectId as String?,
       command: command,
       status: status,
       state: state,
@@ -179,7 +179,7 @@ class PowerFeedback {
   @override
   String toString() =>
       'PowerFeedback(timestamp: $timestamp, commandId: $commandId, '
-      'origin: ${origin.wireValue}, runId: $runId, collectionId: $collectionId, command: ${command.wireValue}, '
+      'origin: ${origin.wireValue}, runId: $runId, collectId: $collectId, command: ${command.wireValue}, '
       'status: ${status.wireValue}, state: ${state.wireValue}, '
       'gait: $gait, current: $current, message: $message)';
 }
