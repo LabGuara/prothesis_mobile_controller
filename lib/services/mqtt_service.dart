@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import '../config/mqtt_config.dart';
 import '../models/action_command.dart';
+import '../models/data_collection.dart';
 import '../models/power_feedback.dart';
 
 class MqttService {
@@ -99,18 +101,30 @@ class MqttService {
   }
 
   Future<void> publishAction(CommandLog command) async {
+    _publish(MqttConfig.commandLogsTopic, command.toJson());
+  }
+
+  /// Tells the orchestrator a data collection started, so it stores the collection with its volunteer.
+  Future<void> publishCollectionStart(DataCollection collection) async {
+    _publish(
+      MqttConfig.collectionsTopic,
+      jsonEncode({'collection_id': collection.id, 'volunteer': collection.volunteer}),
+    );
+  }
+
+  void _publish(String topic, String payload) {
     if (!_isConnected || _client == null) {
       throw Exception('MQTT not connected');
     }
 
     try {
-      final payload = command.toJson();
+      // UTF-8, not addString: that one writes characters such as "ã" as single bytes, which a UTF-8 reader cannot
+      // decode, so a volunteer's name would arrive mangled.
+      final builder = MqttClientPayloadBuilder()..addUTF8String(payload);
 
-      final builder = MqttClientPayloadBuilder()..addString(payload);
+      _client!.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!, retain: false);
 
-      _client!.publishMessage(MqttConfig.commandLogsTopic, MqttQos.atLeastOnce, builder.payload!, retain: false);
-
-      debugPrint('Published: $payload to ${MqttConfig.commandLogsTopic}');
+      debugPrint('Published: $payload to $topic');
     } catch (e) {
       debugPrint('MQTT Publish error: $e');
       rethrow;

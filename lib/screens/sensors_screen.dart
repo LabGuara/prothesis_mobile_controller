@@ -34,6 +34,8 @@ class _SensorsScreenState extends State<SensorsScreen> with WidgetsBindingObserv
     Color(0xFFEA580C),
     Color(0xFF6D28D9),
     Color(0xFFE11D48),
+    Color(0xFF0D9488),
+    Color(0xFFCA8A04),
   ];
 
   late final MqttService _mqttService;

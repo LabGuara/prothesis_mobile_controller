@@ -16,6 +16,10 @@ class SensorMetadata {
     'pP': SensorMetadata('Foot Angle', unit: '°'),
     'cP': SensorMetadata('Foot Current', unit: 'mA'),
     'cPl': SensorMetadata('Foot Current Limited', unit: 'mA'),
+    'g1': SensorMetadata('GRF 1'),
+    'g2': SensorMetadata('GRF 2'),
+    'g3': SensorMetadata('GRF 3'),
+    'g4': SensorMetadata('GRF 4'),
   };
 
   static final Map<String, SensorMetadata> _byLowerKey = {

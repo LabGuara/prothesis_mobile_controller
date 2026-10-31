@@ -92,6 +92,8 @@ class PowerFeedback {
 
   final int? commandId;
   final FeedbackOrigin origin;
+  final String? runId;
+  final String? collectionId;
   final PowerCommand command;
   final PowerFeedbackStatus status;
   final ProsthesisState state;
@@ -105,6 +107,8 @@ class PowerFeedback {
     required this.timestamp,
     required this.commandId,
     required this.origin,
+    required this.runId,
+    required this.collectionId,
     required this.command,
     required this.status,
     required this.state,
@@ -137,6 +141,8 @@ class PowerFeedback {
     final state = ProsthesisState.fromWire(decoded['state']);
     final origin = decoded.containsKey('origin') ? FeedbackOrigin.fromWire(decoded['origin']) : FeedbackOrigin.remote;
     final commandId = decoded['command_id'];
+    final runId = decoded['run_id'];
+    final collectionId = decoded['collection_id'];
     final gait = decoded['gait'];
     final current = decoded['current'];
     final message = decoded['message'];
@@ -147,6 +153,8 @@ class PowerFeedback {
         state == null ||
         origin == null ||
         (commandId != null && commandId is! int) ||
+        (runId != null && runId is! String) ||
+        (collectionId != null && collectionId is! String) ||
         (gait != null && gait is! int) ||
         (current != null && current is! int) ||
         message is! String) {
@@ -157,6 +165,8 @@ class PowerFeedback {
       timestamp: timestamp.toUtc(),
       commandId: commandId as int?,
       origin: origin,
+      runId: runId as String?,
+      collectionId: collectionId as String?,
       command: command,
       status: status,
       state: state,
@@ -169,7 +179,7 @@ class PowerFeedback {
   @override
   String toString() =>
       'PowerFeedback(timestamp: $timestamp, commandId: $commandId, '
-      'origin: ${origin.wireValue}, command: ${command.wireValue}, '
+      'origin: ${origin.wireValue}, runId: $runId, collectionId: $collectionId, command: ${command.wireValue}, '
       'status: ${status.wireValue}, state: ${state.wireValue}, '
       'gait: $gait, current: $current, message: $message)';
 }

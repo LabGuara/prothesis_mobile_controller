@@ -3,27 +3,34 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../config/mqtt_config.dart';
+import '../services/collection_store.dart';
 import '../services/mqtt_service.dart';
 import '../models/action_command.dart';
 import '../models/power_feedback.dart';
+import '../theme/gait_mode_styles.dart';
 
 enum PowerUiState { pending, on, off }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.mqttService, required this.collectionStore});
+
+  /// Shared with the collections screen; this screen connects it and shows its state.
+  final MqttService mqttService;
+  final CollectionStore collectionStore;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late MqttService _mqttService;
+  MqttService get _mqttService => widget.mqttService;
   bool _isConnected = false;
   bool _isConnecting = false;
   PowerUiState _powerState = _assumedInitialState;
 
   PowerCommand? _pendingCommand;
   Timer? _feedbackTimer;
+  StreamSubscription<bool>? _statusSub;
   StreamSubscription<PowerFeedback>? _feedbackSub;
 
   GaitMode? _activeMode;
@@ -38,6 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool get _isCommandPending => _pendingCommand != null || _pendingMode != null || _pendingMilliamps != null;
 
+  String? get _collectionId => widget.collectionStore.activeCollection?.id;
+
   static const _assumedInitialState = PowerUiState.off;
 
   PowerState get _commandButtonTarget {
@@ -51,18 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  static const _modeConfig = <GaitMode, ({IconData icon, Color color})>{
-    GaitMode.walking: (icon: Icons.directions_walk_rounded, color: Color(0xFF2563EB)),
-    GaitMode.stairAscent: (icon: Icons.north_rounded, color: Color(0xFF7C3AED)),
-    GaitMode.standing: (icon: Icons.accessibility_new_rounded, color: Color(0xFF059669)),
-    GaitMode.stairDescent: (icon: Icons.south_rounded, color: Color(0xFFDB2777)),
-    GaitMode.upslopeWalking: (icon: Icons.trending_up_rounded, color: Color(0xFFD97706)),
-    GaitMode.downslopeWalking: (icon: Icons.trending_down_rounded, color: Color(0xFF0891B2)),
-    GaitMode.sitting: (icon: Icons.airline_seat_recline_normal_rounded, color: Color(0xFF65A30D)),
-    GaitMode.sitToStand: (icon: Icons.upload_rounded, color: Color(0xFFEA580C)),
-    GaitMode.standToSit: (icon: Icons.download_rounded, color: Color(0xFF6D28D9)),
-  };
-
   @override
   void initState() {
     super.initState();
@@ -70,8 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initializeMqtt() async {
-    _mqttService = MqttService(subscribeToPowerFeedback: true);
-    _mqttService.connectionStatusStream.listen((isConnected) {
+    _statusSub = _mqttService.connectionStatusStream.listen((isConnected) {
       if (!mounted) {
         return;
       }
@@ -114,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) {
       return;
     }
+    widget.collectionStore.recordFeedback(feedback);
     if (feedback.isInternal) {
       _onInternalFeedback(feedback);
       return;
@@ -200,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? '${mode?.label ?? 'Gait ${feedback.gait}'} activated'
           : 'Gait change failed: ${feedback.message}',
       feedback.isSuccess
-          ? (mode == null ? const Color(0xFF22C55E) : _modeConfig[mode]!.color)
+          ? (mode == null ? const Color(0xFF22C55E) : gaitModeStyles[mode]!.color)
           : const Color(0xFFEF4444),
       duration: feedback.isSuccess ? const Duration(seconds: 2) : const Duration(seconds: 6),
     );
@@ -319,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      await _mqttService.publishAction(CommandLog.fromPower(powerState));
+      await _mqttService.publishAction(CommandLog.fromPower(powerState, collectionId: _collectionId));
       _feedbackTimer?.cancel();
       _feedbackTimer = Timer(MqttConfig.powerFeedbackTimeout, _onFeedbackTimeout);
     } catch (e) {
@@ -336,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _pendingMode = mode);
 
     try {
-      await _mqttService.publishAction(CommandLog.fromGaitMode(mode));
+      await _mqttService.publishAction(CommandLog.fromGaitMode(mode, collectionId: _collectionId));
       _gaitFeedbackTimer?.cancel();
       _gaitFeedbackTimer = Timer(MqttConfig.powerFeedbackTimeout, _onGaitFeedbackTimeout);
     } catch (e) {
@@ -364,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _pendingMilliamps = target);
 
     try {
-      await _mqttService.publishAction(CommandLog.fromActuatorCurrent(target));
+      await _mqttService.publishAction(CommandLog.fromActuatorCurrent(target, collectionId: _collectionId));
       _currentFeedbackTimer?.cancel();
       _currentFeedbackTimer = Timer(MqttConfig.powerFeedbackTimeout, _onCurrentFeedbackTimeout);
     } catch (e) {
@@ -410,6 +407,39 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCollectionBanner() {
+    return ListenableBuilder(
+      listenable: widget.collectionStore,
+      builder: (context, _) {
+        final collection = widget.collectionStore.activeCollection;
+        if (collection == null) {
+          return const SizedBox.shrink();
+        }
+        final runs = collection.runs.length;
+
+        return Container(
+          color: const Color(0xFF14B8A6).withValues(alpha: 0.12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.radio_button_checked_rounded, size: 14, color: Color(0xFF14B8A6)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Collecting: ${collection.volunteer}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Color(0xFF14B8A6), fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(runs == 1 ? '1 run' : '$runs runs', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -561,7 +591,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildModeCard(GaitMode mode) {
-    final cfg = _modeConfig[mode]!;
+    final cfg = gaitModeStyles[mode]!;
     final isActive = _activeMode == mode;
     final isPending = _pendingMode == mode;
     final enabled = _isConnected && !_isCommandPending;
@@ -622,8 +652,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _feedbackTimer?.cancel();
     _gaitFeedbackTimer?.cancel();
     _currentFeedbackTimer?.cancel();
+    _statusSub?.cancel();
     _feedbackSub?.cancel();
-    _mqttService.dispose();
     super.dispose();
   }
 
@@ -646,6 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildStatusBar(l10n),
+          _buildCollectionBanner(),
 
           Expanded(
             child: Padding(
