@@ -101,7 +101,6 @@ class CommandLog {
   final CommandType commandType;
   final int value;
 
-  /// The collect open when the command was sent: a run the command starts is filed under it.
   final String? collectId;
 
   CommandLog({this.id, DateTime? timestamp, required this.commandType, required this.value, this.collectId})

@@ -18,7 +18,6 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  // Commands and collect starts share one connection, which the control screen connects and shows.
   final _mqttService = MqttService(subscribeToPowerFeedback: true);
 
   @override

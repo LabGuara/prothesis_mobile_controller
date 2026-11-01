@@ -2,8 +2,6 @@ import 'package:uuid/uuid.dart';
 
 import 'action_command.dart';
 
-/// One run of the prosthesis, as named by the bridge. The times are the timestamps of the feedbacks
-/// that started and ended it, the same ones the orchestrator stores for the run.
 class CollectRun {
   final String runId;
   final DateTime startedAt;
@@ -38,8 +36,6 @@ class CollectRun {
   };
 }
 
-/// A session with one volunteer. The app announces it, with the volunteer, when it starts; every
-/// command then carries its [id], so the runs it starts are filed under it.
 class Collect {
   final String id;
   final String volunteer;
@@ -58,7 +54,6 @@ class Collect {
   factory Collect.fromMap(Map<String, dynamic> map) {
     final finishedAt = map['finished_at'] as String?;
     return Collect(
-      // Collects saved before they had an id get one now; their runs were stored without it.
       id: map['id'] as String? ?? const Uuid().v4(),
       volunteer: map['volunteer'] as String,
       startedAt: DateTime.parse(map['started_at'] as String),

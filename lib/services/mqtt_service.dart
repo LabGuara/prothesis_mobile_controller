@@ -104,7 +104,6 @@ class MqttService {
     _publish(MqttConfig.commandLogsTopic, command.toJson());
   }
 
-  /// Tells the orchestrator a collect started, so it stores it with its volunteer.
   Future<void> publishCollectStart(Collect collect) async {
     _publish(MqttConfig.collectsTopic, jsonEncode({'collect_id': collect.id, 'volunteer': collect.volunteer}));
   }
@@ -115,8 +114,6 @@ class MqttService {
     }
 
     try {
-      // UTF-8, not addString: that one writes characters such as "ã" as single bytes, which a UTF-8 reader cannot
-      // decode, so a volunteer's name would arrive mangled.
       final builder = MqttClientPayloadBuilder()..addUTF8String(payload);
 
       _client!.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!, retain: false);
@@ -205,7 +202,7 @@ class MqttService {
     int attempts = 0;
     while (attempts < MqttConfig.maxReconnectAttempts && !_isConnected && !_manualDisconnect && !_isDisposed) {
       await Future.delayed(
-        Duration(seconds: (attempts + 1) * 2), // Exponential backoff
+        Duration(seconds: (attempts + 1) * 2),
       );
       try {
         debugPrint('Attempting to reconnect... (attempt ${attempts + 1})');

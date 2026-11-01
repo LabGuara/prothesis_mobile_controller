@@ -25,7 +25,6 @@ class CollectsScreen extends StatelessWidget {
       return;
     }
 
-    // Only opened once announced, so the orchestrator stores it with its volunteer.
     final collect = Collect.create(volunteer);
     try {
       await mqttService.publishCollectStart(collect);
@@ -142,7 +141,6 @@ class CollectsScreen extends StatelessWidget {
           body: collects.isEmpty
               ? _buildEmpty()
               : ListView.separated(
-                  // The bottom inset keeps the last card clear of the floating button.
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                   itemCount: collects.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -321,10 +319,7 @@ class CollectsScreen extends StatelessWidget {
     );
   }
 
-  /// An id to look up in the database later: tapping it copies it.
   Widget _buildCopyableId(BuildContext context, String id, {required String copiedMessage, String? label}) {
-    // Pulled left by its padding, so the id lines up with the text above while the tap highlight still leaves room
-    // before it.
     return Transform.translate(
       offset: const Offset(-6, 0),
       child: InkWell(

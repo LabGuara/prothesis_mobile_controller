@@ -14,7 +14,6 @@ enum PowerUiState { pending, on, off }
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.mqttService, required this.collectStore});
 
-  /// Shared with the collects screen; this screen connects it and shows its state.
   final MqttService mqttService;
   final CollectStore collectStore;
 
@@ -365,7 +364,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentFeedbackTimer?.cancel();
       _currentFeedbackTimer = Timer(MqttConfig.powerFeedbackTimeout, _onCurrentFeedbackTimeout);
     } catch (e) {
-      // The command never left the phone, so no feedback is coming.
       _currentFeedbackTimer?.cancel();
       _currentFeedbackTimer = null;
       if (!mounted) {

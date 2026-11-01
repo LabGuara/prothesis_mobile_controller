@@ -80,7 +80,6 @@ class _SensorsScreenState extends State<SensorsScreen> with WidgetsBindingObserv
   @override
   void didUpdateWidget(SensorsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // The tab was selected or deselected — start/stop the render timer.
     if (widget.isActive != oldWidget.isActive) {
       _syncRendering();
     }
@@ -102,7 +101,6 @@ class _SensorsScreenState extends State<SensorsScreen> with WidgetsBindingObserv
     _syncRendering();
   }
 
-  /// Parses a payload and appends its samples to the per-sensor windows.
   void _onPayload(String payload) {
     final samples = _parseSamples(payload);
     if (samples.isEmpty) return;

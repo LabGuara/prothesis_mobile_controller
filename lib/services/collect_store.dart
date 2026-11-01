@@ -7,17 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/collect.dart';
 import '../models/power_feedback.dart';
 
-/// Keeps the collects on the phone and files every run under the collect its feedback
-/// names. At most one collect is active at a time.
 class CollectStore extends ChangeNotifier {
   CollectStore._(this._prefs, this._collects);
 
-  // Kept from before the rename to collects, so the ones already saved on the phone are still found.
   static const String _storageKey = 'data_collections';
 
   final SharedPreferencesAsync _prefs;
 
-  /// Newest first.
   final List<Collect> _collects;
 
   static Future<CollectStore> load() async {
@@ -37,7 +33,6 @@ class CollectStore extends ChangeNotifier {
       debugPrint('Failed to load collects: $e');
     }
     final store = CollectStore._(prefs, collects);
-    // Collects saved before they had an id were just given one: saved now, so it stays the same.
     if (givenIds) {
       await store._save();
     }
@@ -61,8 +56,6 @@ class CollectStore extends ChangeNotifier {
     _changed();
   }
 
-  /// A run still in progress stays in the collect and gets its end time when the prosthesis
-  /// reports it ended.
   void finish() {
     final collect = activeCollect;
     if (collect == null) {
@@ -81,11 +74,6 @@ class CollectStore extends ChangeNotifier {
     }
   }
 
-  /// Opens and closes runs the way the orchestrator does, so their times match the database: a
-  /// feedback that leaves the prosthesis on with an unknown run id ends the run in progress and
-  /// starts that one, a known run id means the run kept going, and a feedback that leaves the
-  /// prosthesis off ends the run in progress. A new run is kept in the collect its feedback
-  /// names, the one the command that started it was sent in, if that collect is on this phone.
   void recordFeedback(PowerFeedback feedback) {
     final inProgress = _runInProgress;
 
